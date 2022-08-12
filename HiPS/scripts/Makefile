@@ -3,7 +3,7 @@
 
 CC     = gcc -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS = -g -O2 -I. -I../../lib/include
-LIBS   = -L../../lib -lwcs -lboundaries -lmtbl -lsvc -lcfitsio -lm
+LIBS   = -L../../lib -lwcs -lboundaries -lmtbl -lsvc -lcfitsio -lm -pthread
 
 .c.o:
 			$(CC) $(CFLAGS)  -c  $*.c

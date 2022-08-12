@@ -39,7 +39,7 @@ struct mSubCubeParams
 void              mSubCube_fixxy          (double *x, double *y, int *offscl);
 struct WorldCoor *mSubCube_getFileInfo    (fitsfile *infptr, char **header, struct mSubCubeParams *params);
 int               mSubCube_copyHeaderInfo (fitsfile *infptr, fitsfile *outfptr, struct mSubCubeParams *params);
-int               mSubCube_copyData       (fitsfile *infptr, fitsfile *outfptr, struct mSubCubeParams *params);
+int               mSubCube_copyData       (char *infile, int hdu, fitsfile *outfptr, struct mSubCubeParams *params);
 int               mSubCube_parseSelectList(int ind, struct mSubCubeParams *params);
 int               mSubCube_dataRange      (fitsfile *infptr, int *imin, int *imax, int *jmin, int *jmax);
 void              mSubCube_printFitsError (int);

@@ -9,7 +9,7 @@
 
 CC     =	gcc -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS =	-g -O2 -I. -I../../lib/include -I../../Montage
-LIBS   =	-L../../lib -lwcs -lcoord -lcfitsio -ljpeg -lm
+LIBS   =	-L../../lib -lwcs -lcoord -lcfitsio -ljpeg -lm -pthread
 
 .c.o:
 		$(CC) $(CFLAGS)  -c  $*.c

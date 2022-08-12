@@ -5,6 +5,7 @@
 
 #include <mSubCube.h>
 #include <montage.h>
+#include <s3_driver.h>
 
 #define STRLEN 32768
 
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
 
    char     *end;
 
-   double    ra, dec, xsize, ysize;
+   double    ra = 0, dec = 0, xsize = 0, ysize = 0;
 
    struct mSubCubeReturn *returnStruct;
 
@@ -62,6 +63,8 @@ int main(int argc, char **argv)
    havePlane  = 0;
    haveD3     = 0;
    haveD4     = 0;
+
+   register_s3_driver();
 
    montage_status = stdout;
 
