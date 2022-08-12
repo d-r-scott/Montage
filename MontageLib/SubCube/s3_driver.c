@@ -25,10 +25,6 @@ typedef struct    /* structure containing s3 file information */
 
 static s3DriverFile handleTable[NMAXFILES];
 
-static char s3AccessKey[MAXLEN];
-static char s3SecretKey[MAXLEN];
-static char s3EndPoint[MAXLEN];
-
 static void read_env(const char *name, char *dest) {
     if (NULL != getenv(name)) {
         if (strlen(getenv(name)) > MAXLEN - 1) {
@@ -90,8 +86,11 @@ static int encode64(unsigned s_len, char *src, unsigned d_len, char *dst) {
 
 static char *generate_sha1_hmac(char *input) {
     unsigned char out[EVP_MAX_MD_SIZE];
+    char s3SecretKey[MAXLEN];
     char *result = (char *) malloc(MAXLEN);
     unsigned int len;
+
+    read_env("S3_SECRET_KEY", (char *) &s3SecretKey);
 
     HMAC_CTX *h = HMAC_CTX_new();
     HMAC_Init_ex(h, &s3SecretKey, strlen((char *) &s3SecretKey), EVP_sha1(), NULL);
@@ -137,6 +136,10 @@ static struct curl_slist *init_s3_request(CURL *curlContext, char *url, const ch
     /* parse the endpoint and extract the correct host */
     CURLU *h = curl_url();
     CURLUcode uc;
+
+    char s3EndPoint[MAXLEN];
+    read_env("S3_ENDPOINT", (char *) &s3EndPoint);
+
     uc = curl_url_set(h, CURLUPART_URL, (char *) &s3EndPoint, 0);
     if(uc) {
         printf("Unable to parse the host url: %s", (char *) &s3EndPoint);
@@ -163,6 +166,9 @@ static struct curl_slist *init_s3_request(CURL *curlContext, char *url, const ch
 
     header = curl_slist_append(header, "Content-Type: application/zstd");
 
+    char s3AccessKey[MAXLEN];
+    read_env("S3_ACCESS_KEY", (char *) &s3AccessKey);
+
     char authHdr[MAXLEN*2];
     sprintf((char *) &authHdr, "Authorization: AWS %s:%s", (char *) &s3AccessKey, signatureHash);
     header = curl_slist_append(header, (char *) &authHdr);
@@ -177,10 +183,6 @@ static struct curl_slist *init_s3_request(CURL *curlContext, char *url, const ch
 }
 
 static int s3_init(void) {
-    read_env("S3_ENDPOINT", (char *) &s3EndPoint);
-    read_env("S3_ACCESS_KEY", (char *) &s3AccessKey);
-    read_env("S3_SECRET_KEY", (char *) &s3SecretKey);
-
     return 0;
 }
 
