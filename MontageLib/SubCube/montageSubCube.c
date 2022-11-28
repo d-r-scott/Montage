@@ -1361,16 +1361,16 @@ int mSubCube_copyData(char *infile, int hdu, fitsfile *outfptr, struct mSubCubeP
                 exit(1);
             }
          }
-
-         fits_close_file(infptr, &status);
       }
 
-       if(bitpix == -64) free(buffer_double);
-       else if(bitpix == -32) free(buffer_float);
-       else if(bitpix ==  64) free(buffer_longlong);
-       else if(bitpix ==  32) free(buffer_long);
-       else if(bitpix ==  16) free(buffer_short);
-       else if(bitpix ==   8) free(buffer_byte);
+      if(bitpix == -64) free(buffer_double);
+      else if(bitpix == -32) free(buffer_float);
+      else if(bitpix ==  64) free(buffer_longlong);
+      else if(bitpix ==  32) free(buffer_long);
+      else if(bitpix ==  16) free(buffer_short);
+      else if(bitpix ==   8) free(buffer_byte);
+
+      fits_close_file(infptr, &status);
    }
 
    if(isflat)
