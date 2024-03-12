@@ -9,18 +9,20 @@
 
 /**************************************************************************************/
 /*                                                                                    */
-/*  mSubimage has two major modes and two "convenience" modes (other parameters       */
+/*  mSubimage has three major modes and two "convenience" modes (other parameters     */
 /*  omitted for clarity):                                                             */
 /*                                                                                    */
 /*  mSubimage    [-d][-h hdu] in.fit out.fit racent    deccent   xsize     ysize      */
+/*  mSubimage -g [-d][-h hdu] in.fit out.fit lcent     bcent     xsize     ysize      */
 /*  mSubimage -p [-d][-h hdu] in.fit out.fit xstartpix ystartpix xsize     ysize      */
 /*  mSubimage -a [-d] -h hdu  in.fit out.fit (ignored) (ignored) (ignored) (ignored)  */
 /*  mSubimage -c [-d][-h hdu] in.fit out.fit (ignored) (ignored) (ignored) (ignored)  */
 /*                                                                                    */
-/*  mode 0 (SKY):    (xref,yref) are (ra,dec) of center, sizes in degrees             */
-/*  mode 1 (PIX):    (xref,yref) are 'start' pixel coords, sizes in pixels            */
-/*  mode 2 (HDU):    All the pixels; essentially for picking out an HDU               */
-/*  mode 3 (SHRINK): All the pixels with blank edges trimmed off                      */
+/*  mode 0 (EQUM):   (xref,yref) are (ra,dec) of center, sizes in degrees             */
+/*  mode 1 (GALM):   (xref,yref) are (l,b) of center, sizes in degrees                */
+/*  mode 2 (PIX):    (xref,yref) are 'start' pixel coords, sizes in pixels            */
+/*  mode 3 (HDU):    All the pixels; essentially for picking out an HDU               */
+/*  mode 4 (SHRINK): All the pixels with blank edges trimmed off                      */
 /*                                                                                    */
 /*  HDU and SHRINK are special cases for convenience.  The 'nowcs' flag is a          */
 /*  special case, too, and only makes sense in PIX mode.                              */
@@ -29,7 +31,7 @@
 
 int main(int argc, char **argv)
 {
-   int       i, debug, mode, pixmode;
+   int       i, debug, mode, galmode, pixmode;
    int       hdu, allPixels, haveHDU, shrinkWrap;
    int       nowcs;
 
@@ -48,6 +50,7 @@ int main(int argc, char **argv)
 
    debug      = 0;
    nowcs      = 0;
+   galmode    = 0;
    pixmode    = 0;
    allPixels  = 0;
    shrinkWrap = 0;
@@ -60,7 +63,7 @@ int main(int argc, char **argv)
       
    if(argc < 4)
    {
-      printf("[struct stat=\"ERROR\", msg=\"Usage: %s [-d][-a(ll pixels)][-h hdu][-s statusfile] in.fit out.fit ra dec xsize [ysize] | %s -p [-d][-h hdu][-s statusfile] in.fit out.fit xstartpix ystartpix xpixsize [ypixsize] | %s -c [-d][-h hdu][-s statusfile] in.fit out.fit\"]\n", appname, appname, appname);
+      printf("[struct stat=\"ERROR\", msg=\"Usage: %s [-d][-a(ll pixels)][-h hdu][-s statusfile] in.fit out.fit ra dec xsize [ysize] | %s -g [-d][-a(ll pixels)][-h hdu][-s statusfile] in.fit out.fit l b xsize [ysize] | %s -p [-d][-h hdu][-s statusfile] in.fit out.fit xstartpix ystartpix xpixsize [ypixsize] | %s -c [-d][-h hdu][-s statusfile] in.fit out.fit\"]\n", appname, appname, appname, appname);
       exit(1);
    }
 
@@ -75,6 +78,9 @@ int main(int argc, char **argv)
       
       if(strcmp(argv[i], "-a") == 0)
          allPixels = 1;
+
+      if(strcmp(argv[i], "-g") == 0)
+         galmode = 1;
       
       if(strcmp(argv[i], "-p") == 0)
          pixmode = 1;
@@ -145,6 +151,11 @@ int main(int argc, char **argv)
       --argc;
    }
 
+   if (galmode)
+   {
+      ++argv;
+      --argc;
+   }
 
    if(pixmode)
    {
@@ -180,13 +191,16 @@ int main(int argc, char **argv)
    strcpy(infile,  argv[1]);
    strcpy(outfile, argv[2]);
 
-   mode = SKY;
+   mode = EQUM;
 
    if(allPixels)
       mode = HDU;
 
    if(shrinkWrap)
       mode = SHRINK;
+
+   if(galmode)
+      mode = GALM;
 
    if(pixmode)
       mode = PIX;
@@ -208,7 +222,7 @@ int main(int argc, char **argv)
 
          if(end < argv[3] + (int)strlen(argv[3]))
          {
-            printf("[struct stat=\"ERROR\", msg=\"Center RA string (%s) cannot be interpreted as a real number\"]\n", 
+            printf("[struct stat=\"ERROR\", msg=\"Center RA/l string (%s) cannot be interpreted as a real number\"]\n", 
                argv[3]);
             exit(1);
          }
@@ -217,7 +231,7 @@ int main(int argc, char **argv)
 
          if(end < argv[4] + (int)strlen(argv[4]))
          {
-            printf("[struct stat=\"ERROR\", msg=\"Center Dec string (%s) cannot be interpreted as a real number\"]\n", 
+            printf("[struct stat=\"ERROR\", msg=\"Center Dec/b string (%s) cannot be interpreted as a real number\"]\n", 
                argv[4]);
             exit(1);
          }

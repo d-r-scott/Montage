@@ -59,9 +59,10 @@ static char montage_json  [1024];
 /*  the XY size in degrees of the area (X and Y) in the direction of     */
 /*  the image axes, not Equatorial coordinates.                          */
 /*                                                                       */
-/*   int    mode           Processing mode. The two main modes are       */
-/*                         0 (SKY) and 1 (PIX), corresponding to cutouts */
-/*                         are in sky coordinate or pixel space. The two */
+/*   int    mode           Processing mode. The three main modes are     */
+/*                         0 (EQUM), 1 (GALM), and 2 (PIX), corresponding*/
+/*                         to cutouts in equatorial, galactic, and pixel */
+/*                         coordinates. The two                          */
 /*                         other modes are 3 (HDU) and 4 (SHRINK), where */
 /*                         the region parameters are ignored and you get */
 /*                         back either a single HDU or an image that has */
@@ -70,14 +71,14 @@ static char montage_json  [1024];
 /*   char  *infile         Input FITS file                               */
 /*   char  *outfile        Subimage output FITS file                     */
 /*                                                                       */
-/*   double ra             RA of cutout center (or start X pixel in      */
-/*                         PIX mode                                      */
-/*   double dec            Dec of cutout center (or start Y pixel in     */
-/*                         PIX mode                                      */
+/*   double ra             RA/l of cutout center (or start X pixel in    */
+/*                         PIX mode)                                     */
+/*   double dec            Dec/b of cutout center (or start Y pixel in   */
+/*                         PIX mode)                                     */
 /*                                                                       */
-/*   double xsize          X size in degrees (SKY mode) or pixels        */
+/*   double xsize          X size in degrees (EQUM/GALM mode) or pixels  */
 /*                         (PIX mode)                                    */
-/*   double ysize          Y size in degrees (SKY mode) or pixels        */
+/*   double ysize          Y size in degrees (EQUM/GALM mode) or pixels  */
 /*                         (PIX mode)                                    */
 /*                                                                       */
 /*   int    hdu            Optional HDU offset for input file            */
@@ -100,12 +101,12 @@ struct mSubCubeReturn *mSubCube(int mode, char *infile, char *outfile, double ra
 {
    fitsfile *infptr, *outfptr;
 
-   int       i, offscl, pixMode;
+   int       i, offscl, galMode, pixMode;
    double    cdelt[10];
    int       allPixels, shrinkWrap;
    int       imin, imax, jmin, jmax;
 
-   int       sys;
+   int       insys, sys;
    double    epoch;
    double    lon, lat;
    double    xpix, ypix;
@@ -148,11 +149,18 @@ struct mSubCubeReturn *mSubCube(int mode, char *infile, char *outfile, double ra
 
    mSubCube_debug = debugin;
 
+   galMode    = 0;
    pixMode    = 0;
    allPixels  = 0;
    shrinkWrap = 0;
 
+   insys      = EQUJ;
 
+   if(mode == GALM) 
+   {
+      insys   = GAL;
+      galMode = 1;
+   } 
    if(mode == PIX)    pixMode    = 1;
    if(mode == HDU)    allPixels  = 1;
    if(mode == SHRINK) shrinkWrap = 1;
@@ -261,6 +269,7 @@ struct mSubCubeReturn *mSubCube(int mode, char *infile, char *outfile, double ra
    {
       printf("DEBUG> mSubCube command parsing:\n\n");
       printf("DEBUG> nowcs      = %d\n", nowcs);
+      printf("DEBUG> galMode    = %d\n", galMode);
       printf("DEBUG> pixMode    = %d\n", pixMode);
       printf("DEBUG> shrinkWrap = %d\n", shrinkWrap);
       printf("DEBUG> allPixels  = %d\n", allPixels);
@@ -505,7 +514,7 @@ struct mSubCubeReturn *mSubCube(int mode, char *infile, char *outfile, double ra
       
       if(mSubCube_debug)
       {
-         printf("input coordinate system = %d\n", EQUJ);
+         printf("input coordinate system = %d\n", insys);
          printf("input epoch             = %-g\n", 2000.);
          printf("image coordinate system = %d\n", sys);
          printf("image epoch             = %-g\n", epoch);
@@ -594,7 +603,7 @@ struct mSubCubeReturn *mSubCube(int mode, char *infile, char *outfile, double ra
       /* sky coordinate specified       */
       /**********************************/
 
-      convertCoordinates(EQUJ, 2000., ra, dec, sys, epoch, &lon, &lat, 0.);
+      convertCoordinates(insys, 2000., ra, dec, sys, epoch, &lon, &lat, 0.);
 
       offscl = 0;
 

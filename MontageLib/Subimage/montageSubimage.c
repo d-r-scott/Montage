@@ -112,19 +112,20 @@ static char montage_msgstr[1024];
 /*   char  *infile         Input FITS file                               */
 /*   char  *outfile        Subimage output FITS file                     */
 /*                                                                       */
-/*   double ra             RA of cutout center (or start X pixel in      */
+/*   double ra             RA/l of cutout center (or start X pixel in    */
 /*                         PIX mode                                      */
-/*   double dec            Dec of cutout center (or start Y pixel in     */
+/*   double dec            Dec/b of cutout center (or start Y pixel in   */
 /*                         PIX mode                                      */
 /*                                                                       */
-/*   double xsize          X size in degrees (SKY mode) or pixels        */
+/*   double xsize          X size in degrees (EQUM/GALM mode) or pixels  */
 /*                         (PIX mode)                                    */
-/*   double ysize          Y size in degrees (SKY mode) or pixels        */
+/*   double ysize          Y size in degrees (EQUM/GALM mode) or pixels  */
 /*                         (PIX mode)                                    */
 /*                                                                       */
-/*   int    mode           Processing mode. The two main modes are       */
-/*                         0 (SKY) and 1 (PIX), corresponding to cutouts */
-/*                         are in sky coordinate or pixel space. The two */
+/*   int    mode           Processing mode. The three main modes are     */
+/*                         0 (EQUM), 1 (GALM), and 2 (PIX), corresponding*/
+/*                         to cutouts in equatorial, galactic, and pixel */
+/*                         coordinates. The two                          */
 /*                         other modes are 3 (HDU) and 4 (SHRINK), where */
 /*                         the region parameters are ignored and you get */
 /*                         back either a single HDU or an image that has */
@@ -145,10 +146,10 @@ struct mSubimageReturn *mSubimage(char *infile, char *outfile, double ra, double
 
    int       i, offscl;
    double    cdelt[10];
-   int       pixMode, shrinkWrap;
+   int       galMode, pixMode, shrinkWrap;
    int       imin, imax, jmin, jmax;
 
-   int       sys;
+   int       insys, sys;
    double    epoch;
    double    lon, lat;
    double    xpix, ypix;
@@ -174,9 +175,17 @@ struct mSubimageReturn *mSubimage(char *infile, char *outfile, double ra, double
 
    mSubimage_debug = debugin;
 
+   galMode    = 0;
    pixMode    = 0;
    shrinkWrap = 0;
-   
+
+   insys      = EQUJ;
+
+   if(mode == GALM)
+   {
+      insys  = GAL;
+      galMode = 1;
+   }
    if(mode == PIX)    pixMode    = 1;
    if(mode == SHRINK) shrinkWrap = 1;
 
@@ -377,7 +386,7 @@ struct mSubimageReturn *mSubimage(char *infile, char *outfile, double ra, double
       
       if(mSubimage_debug)
       {
-         printf("input coordinate system = %d\n", EQUJ);
+         printf("input coordinate system = %d\n", insys);
          printf("input epoch             = %-g\n", 2000.);
          printf("image coordinate system = %d\n", sys);
          printf("image epoch             = %-g\n", epoch);
@@ -458,7 +467,7 @@ struct mSubimageReturn *mSubimage(char *infile, char *outfile, double ra, double
       /* sky coordinate specified       */
       /**********************************/
 
-      convertCoordinates(EQUJ, 2000., ra, dec, sys, epoch, &lon, &lat, 0.);
+      convertCoordinates(insys, 2000., ra, dec, sys, epoch, &lon, &lat, 0.);
 
       offscl = 0;
 
