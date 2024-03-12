@@ -327,7 +327,7 @@ static int s3_read(int hdl, void *buffer, long nbytes) {
 
     // Set the range header
     char rangeHdr[MAXLEN];
-    sprintf((char *) &rangeHdr, "%llu-%llu", handleTable[hdl].currentpos, handleTable[hdl].currentpos + nbytes);
+    sprintf((char *) &rangeHdr, "%llu-%llu", handleTable[hdl].currentpos, handleTable[hdl].currentpos + nbytes - 1);
     curl_easy_setopt(handleTable[hdl].curlContext, CURLOPT_RANGE, (char *) &rangeHdr);
 
     handleTable[hdl].currentpos += nbytes;

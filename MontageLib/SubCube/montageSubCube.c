@@ -1100,7 +1100,13 @@ int mSubCube_copyData(char *infile, int hdu, fitsfile *outfptr, struct mSubCubeP
 
     if(bitpix > 0)
     {
-        fits_set_bscale(outfptr, 1., 0., NULL);
+        int status = 0;
+        fits_set_bscale(outfptr, 1., 0., &status);
+        if (status)
+        {
+            printf("Can't set bscale %i", status);
+            exit(1);
+        }
     }
 
    omp_set_dynamic(0);
