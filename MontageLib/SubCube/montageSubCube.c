@@ -59,9 +59,10 @@ static char montage_json  [1024];
 /*  the XY size in degrees of the area (X and Y) in the direction of     */
 /*  the image axes, not Equatorial coordinates.                          */
 /*                                                                       */
-/*   int    mode           Processing mode. The two main modes are       */
-/*                         0 (SKY) and 1 (PIX), corresponding to cutouts */
-/*                         are in sky coordinate or pixel space. The two */
+/*   int    mode           Processing mode. The three main modes are     */
+/*                         0 (SKYEQU), 1 (SKYGAL), and 2 (PIX),          */
+/*                         corresponding to cutouts in equatorial or     */
+/*                         galactic coordinates, or pixel space. The two */
 /*                         other modes are 3 (HDU) and 4 (SHRINK), where */
 /*                         the region parameters are ignored and you get */
 /*                         back either a single HDU or an image that has */
@@ -75,10 +76,10 @@ static char montage_json  [1024];
 /*   double dec            Dec of cutout center (or start Y pixel in     */
 /*                         PIX mode                                      */
 /*                                                                       */
-/*   double xsize          X size in degrees (SKY mode) or pixels        */
-/*                         (PIX mode)                                    */
-/*   double ysize          Y size in degrees (SKY mode) or pixels        */
-/*                         (PIX mode)                                    */
+/*   double xsize          X size in degrees (SKYEQU/SKYGAL mode) or     */
+/*                         pixels (PIX mode)                             */
+/*   double ysize          Y size in degrees (SKYEQU/SKYGAL mode) or     */
+/*                         pixels (PIX mode)                             */
 /*                                                                       */
 /*   int    hdu            Optional HDU offset for input file            */
 /*   int    nowcs          Indicates that the image has no WCS info      */
@@ -100,12 +101,13 @@ struct mSubCubeReturn *mSubCube(int mode, char *infile, char *outfile, double ra
 {
    fitsfile *infptr, *outfptr;
 
-   int       i, offscl, pixMode;
+   int       i, offscl, galMode, pixMode;
    double    cdelt[10];
    int       allPixels, shrinkWrap;
    int       imin, imax, jmin, jmax;
    int       haveBlank;
 
+   int       insys;
    int       sys = 0;
    double    epoch = 0;
    double    lon, lat;
@@ -149,6 +151,7 @@ struct mSubCubeReturn *mSubCube(int mode, char *infile, char *outfile, double ra
 
    mSubCube_debug = debugin;
 
+   galMode    = 0;
    pixMode    = 0;
    allPixels  = 0;
    shrinkWrap = 0;
@@ -595,7 +598,11 @@ struct mSubCubeReturn *mSubCube(int mode, char *infile, char *outfile, double ra
       /* sky coordinate specified       */
       /**********************************/
 
-      convertCoordinates(EQUJ, 2000., ra, dec, sys, epoch, &lon, &lat, 0.);
+      insys = EQUJ;
+      if(mode == SKYGAL)
+         insys = GAL;
+      
+      convertCoordinates(insys, 2000., ra, dec, sys, epoch, &lon, &lat, 0.);
 
       offscl = 0;
 

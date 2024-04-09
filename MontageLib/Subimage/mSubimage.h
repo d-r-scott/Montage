@@ -3,11 +3,12 @@
 
 #include <fitsio.h>
 
-#define SKY    0
-#define PIX    1
-#define HDU    2
-#define SHRINK 3
-#define IMGPIX 4
+#define SKYEQU 0
+#define SKYGAL 1
+#define PIX    2
+#define HDU    3
+#define SHRINK 4
+#define IMGPIX 5
 
 struct mSubimageParams
 {

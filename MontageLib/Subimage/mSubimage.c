@@ -13,16 +13,17 @@
 /*  omitted for clarity):                                                             */
 /*                                                                                    */
 /*  mSubimage    [-d][-h hdu] in.fit out.fit racent    deccent   xsize     ysize      */
-/*  mSubimage -p [-d][-h hdu] in.fit out.fit xstartpix ystartpix xsize     ysize      */
+/*  mSubimage -g [-d][-h hdu] in.fit out.fit lcent     bcent     xsize     ysize      */
 /*  mSubimage -P [-d][-h hdu] in.fit out.fit xstartpix ystartpix xsize     ysize      */
 /*  mSubimage -a [-d] -h hdu  in.fit out.fit (ignored) (ignored) (ignored) (ignored)  */
 /*  mSubimage -c [-d][-h hdu] in.fit out.fit (ignored) (ignored) (ignored) (ignored)  */
 /*                                                                                    */
-/*       mode 0 (SKY):    (xref,yref) are (ra,dec) of center, sizes in degrees        */
-/*  -p   mode 1 (PIX):    (xref,yref) are 'start' pixel coords, sizes in pixels       */
-/*  -a   mode 2 (HDU):    All the pixels; essentially for picking out an HDU          */
-/*  -c   mode 3 (SHRINK): All the pixels with blank edges trimmed off                 */
-/*  -P   mode 4 (IMGPIX): Like PIX but relative to CRPIX refereence pixel             */
+/*       mode 0 (SKYEQU): (xref,yref) are (ra,dec) of center, sizes in degrees        */
+/*  -g   mode 1 (SKYGAL): (xref,yref) are (l,b) of center, sizes in degrees           */
+/*  -p   mode 2 (PIX):    (xref,yref) are 'start' pixel coords, sizes in pixels       */
+/*  -a   mode 3 (HDU):    All the pixels; essentially for picking out an HDU          */
+/*  -c   mode 4 (SHRINK): All the pixels with blank edges trimmed off                 */
+/*  -P   mode 5 (IMGPIX): Like PIX but relative to CRPIX refereence pixel             */
 /*                                                                                    */
 /*  HDU and SHRINK are special cases for convenience.  The 'nowcs' flag is a          */
 /*  special case, too, and only makes sense in PIX mode.                              */
@@ -31,7 +32,7 @@
 
 int main(int argc, char **argv)
 {
-   int       i, debug, mode, pixmode;
+   int       i, debug, mode, galmode, pixmode;
    int       hdu, allPixels, haveHDU, shrinkWrap;
    int       nowcs;
 
@@ -50,6 +51,7 @@ int main(int argc, char **argv)
 
    debug      = 0;
    nowcs      = 0;
+   galmode    = 0;
    pixmode    = 0;
    allPixels  = 0;
    shrinkWrap = 0;
@@ -62,7 +64,7 @@ int main(int argc, char **argv)
       
    if(argc < 4)
    {
-      printf("[struct stat=\"ERROR\", msg=\"Usage: %s [-d][-h hdu][-s statusfile] in.fits out.fits ra dec xsize [ysize]  |  %s -p(ixel-mode) [-d][-h hdu][-n(o-wcs)][-s statusfile] in.fits out.fits xstartpix ystartpix xpixsize [ypixsize]  |  %s -P [-d][-h hdu][-s statusfile] in.fit out.fit xstartpix ystartpix xend pix yendpix (relative to crpix)  |  %s -a(ll-pixels) [-d][-h hdu][-s statusfile] in.fits out.fits (to extract HDU)  |  %s -c(rop-nulls) [-d][-h hdu][-s statusfile] in.fits out.fits\"]\n", appname, appname, appname, appname, appname);
+      printf("[struct stat=\"ERROR\", msg=\"Usage: %s [-d][-h hdu][-s statusfile] in.fits out.fits ra dec xsize [ysize] | %s -g(alactic mode) [-d][-h hdu][-s statusfile] in.fits out.fits l b xsize [ysize] | %s -p(ixel-mode) [-d][-h hdu][-n(o-wcs)][-s statusfile] in.fits out.fits xstartpix ystartpix xpixsize [ypixsize]  |  %s -P [-d][-h hdu][-s statusfile] in.fit out.fit xstartpix ystartpix xend pix yendpix (relative to crpix)  |  %s -a(ll-pixels) [-d][-h hdu][-s statusfile] in.fits out.fits (to extract HDU)  |  %s -c(rop-nulls) [-d][-h hdu][-s statusfile] in.fits out.fits\"]\n", appname, appname, appname, appname, appname, appname);
       exit(1);
    }
    
@@ -76,6 +78,9 @@ int main(int argc, char **argv)
       
       if(strcmp(argv[i], "-a") == 0)
          allPixels = 1;
+
+      if(strcmp(argv[i], "-g") == 0)
+         galmode = 1;
       
       if(strcmp(argv[i], "-p") == 0)
          pixmode = 1;
@@ -118,6 +123,7 @@ int main(int argc, char **argv)
    {
       printf("Enter mSubimage: debug= %d\n", debug);
       printf("nowcs      = %d\n", nowcs);
+      printf("galmode    = %d\n", galmode);
       printf("pixmode    = %d\n", pixmode);
       printf("shrinkWrap = %d\n", shrinkWrap);
       printf("allPixels  = %d\n", allPixels);
@@ -149,6 +155,11 @@ int main(int argc, char **argv)
       --argc;
    }
 
+   if(galmode)
+   {
+      ++argv;
+      --argc;
+   }
 
    if(pixmode)
    {
@@ -189,13 +200,16 @@ int main(int argc, char **argv)
    strcpy(infile,  argv[1]);
    strcpy(outfile, argv[2]);
 
-   mode = SKY;
+   mode = SKYEQU;
 
    if(allPixels)
       mode = HDU;
 
    if(shrinkWrap)
       mode = SHRINK;
+
+   if(galmode)
+      mode = SKYGAL;
 
    if(pixmode == 1)
       mode = PIX;
@@ -220,7 +234,7 @@ int main(int argc, char **argv)
 
          if(end < argv[3] + (int)strlen(argv[3]))
          {
-            printf("[struct stat=\"ERROR\", msg=\"Center RA string (%s) cannot be interpreted as a real number\"]\n", 
+            printf("[struct stat=\"ERROR\", msg=\"Center RA/l string (%s) cannot be interpreted as a real number\"]\n", 
                argv[3]);
             exit(1);
          }
@@ -229,7 +243,7 @@ int main(int argc, char **argv)
 
          if(end < argv[4] + (int)strlen(argv[4]))
          {
-            printf("[struct stat=\"ERROR\", msg=\"Center Dec string (%s) cannot be interpreted as a real number\"]\n", 
+            printf("[struct stat=\"ERROR\", msg=\"Center Dec/b string (%s) cannot be interpreted as a real number\"]\n", 
                argv[4]);
             exit(1);
          }

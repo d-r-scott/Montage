@@ -117,19 +117,20 @@ static char montage_msgstr[1024];
 /*   double dec            Dec of cutout center (or start Y pixel in     */
 /*                         PIX mode                                      */
 /*                                                                       */
-/*   double xsize          X size in degrees (SKY mode) or pixels        */
-/*                         (PIX mode)                                    */
-/*   double ysize          Y size in degrees (SKY mode) or pixels        */
-/*                         (PIX mode)                                    */
+/*   double xsize          X size in degrees (SKYEQU/SKYGAL mode) or     */
+/*                         pixels (PIX mode)                             */
+/*   double ysize          Y size in degrees (SKYEQU/SKYGAL mode) or     */
+/*                         pixels (PIX mode)                             */
 /*                                                                       */
 /*                         In IMGPIX mode (relative to CRPIX), the ra,   */
 /*                         dec parameters are the offset of the          */
 /*                         beginning pixel and xsize,ysize are the       */
 /*                         offset of the end pixel.                      */
 /*                                                                       */
-/*   int    mode           Processing mode. The two main modes are       */
-/*                         0 (SKY) and 1 (PIX), corresponding to cutouts */
-/*                         are in sky coordinate or pixel space. The two */
+/*   int    mode           Processing mode. The three main modes are     */
+/*                         0 (SKYEQU), 1 (SKYGAL), and 2 (PIX),          */
+/*                         corresponding to cutouts in equatorial or     */
+/*                         galactic coordinates, or pixel space. The two */
 /*                         other modes are 2 (HDU) and 3 (SHRINK), where */
 /*                         the region parameters are ignored and you get */
 /*                         back either a single HDU or an image that has */
@@ -153,9 +154,10 @@ struct mSubimageReturn *mSubimage(char *infile, char *outfile, double ra, double
 
    int       i, offscl;
    double    cdelt[10];
-   int       shrinkWrap, pixMode, allPixels;
+   int       shrinkWrap, galMode, pixMode, allPixels;
    int       imin, imax, jmin, jmax;
 
+   int       insys;
    int       sys   = 0;
    double    epoch = 0.;
 
@@ -183,6 +185,7 @@ struct mSubimageReturn *mSubimage(char *infile, char *outfile, double ra, double
 
    mSubimage_debug = debugin;
 
+   galMode    = 1;
    pixMode    = 0;
    allPixels  = 0;
    shrinkWrap = 0;
@@ -542,14 +545,18 @@ struct mSubimageReturn *mSubimage(char *infile, char *outfile, double ra, double
       }
    }
    
-   else if(mode == SKY)
+   else if(mode == SKYEQU || mode == SKYGAL)
    {
       /**********************************/
       /* Find the pixel location of the */
       /* sky coordinate specified       */
       /**********************************/
 
-      convertCoordinates(EQUJ, 2000., ra, dec, sys, epoch, &lon, &lat, 0.);
+      insys = EQUJ;
+      if(mode == SKYGAL)
+         insys = GAL;
+
+      convertCoordinates(insys, 2000., ra, dec, sys, epoch, &lon, &lat, 0.);
 
       offscl = 0;
 
